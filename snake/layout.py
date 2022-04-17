@@ -142,7 +142,7 @@ class Vector:
         return Vector(self.x - other.x, self.y - other.y)
 
     def get_size(self) -> float:
-        return math.sqrt(self.x ** 2 + self.y ** 2)
+        return math.sqrt(self.x**2 + self.y**2)
 
     def normalize(self):
         size = self.get_size()

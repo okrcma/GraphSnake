@@ -95,12 +95,21 @@ class GraphSurface(AbstractSurface):
         for edge in self.graph.edges:
             (x1, y1), (x2, y2) = self.layout.get_edge_coordinates(edge)
             pygame.gfxdraw.line(
-                self._surface, x1, y1, x2, y2, self.get_edge_color(edge),
+                self._surface,
+                x1,
+                y1,
+                x2,
+                y2,
+                self.get_edge_color(edge),
             )
         for vertex in self.graph.vertices:
             x, y = self.layout.get_vertex_coordinates(vertex)
             pygame.gfxdraw.filled_circle(
-                self._surface, x, y, self.vertex_radius, self.get_vertex_color(vertex),
+                self._surface,
+                x,
+                y,
+                self.vertex_radius,
+                self.get_vertex_color(vertex),
             )
 
     def scale(self, width_ratio: float, height_ratio: float):
