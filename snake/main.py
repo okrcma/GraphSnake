@@ -45,4 +45,3 @@ if __name__ == "__main__":
 # TODO try different graphs (e.g. hex)
 # TODO add black check to pipeline
 # TODO add README
-# TODO restructure files and directories
