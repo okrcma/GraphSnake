@@ -1,9 +1,12 @@
+"""This module contains the game logic and classes maintaining the game graph state."""
 from __future__ import annotations
 
 import random
 
 
 class VertexType:
+    """Enum of types of vertices."""
+
     NONE = 0
     EMPTY = 1
     WALL = 2
@@ -12,31 +15,60 @@ class VertexType:
 
 
 class Vertex:
+    """Class representing vertices of the game graph.
+
+    Attributes:
+        type (VertexType): Type of the vertex.
+
+    """
+
     def __init__(self, id: str, type: VertexType = VertexType.NONE):
+        """Initializes the vertex.
+
+        Args:
+            id (str): An ID used to test equality of vertices. No two vertices should
+                have the same id.
+            type (VertexType): Type of the vertex.
+
+        """
         self._id = id
         self.type = type
 
-    def __eq__(self, other: Vertex):
+    def __eq__(self, other: Vertex) -> bool:
         return self._id == other._id
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self._id)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self._id}>"
 
 
 class VertexFactory:
+    """Creates vertices with incremental IDs."""
+
     def __init__(self):
+        """Initializes the factory."""
         self._next_id_int = 0
 
     def create_vertex(self, type: VertexType = VertexType.NONE) -> Vertex:
+        """Creates new vertex with the given type and unique id.
+
+        Args:
+            type (VertexType): Type of the vertex.
+
+        Returns:
+            Vertex: The new vertex.
+
+        """
         id = str(self._next_id_int)
         self._next_id_int += 1
         return Vertex(id, type)
 
 
 class EdgeType:
+    """Enum of types of edges."""
+
     NONE = 0
     EMPTY = 1
     SNAKE = 2
@@ -44,6 +76,16 @@ class EdgeType:
 
 
 class Edge:
+    """Class representing edges of the game graph.
+
+    Attributes:
+        first (Vertex): First vertex incident with this edge.
+        second (Vertex): Second vertex incident with this edge.
+        type (EdgeType): Type of the edge.
+        directed (bool): Whether the edge is directed or not.
+
+    """
+
     def __init__(
         self,
         first: Vertex,
@@ -51,19 +93,51 @@ class Edge:
         type: EdgeType = EdgeType.NONE,
         directed: bool = False,
     ):
+        """Initializes the edge.
+
+        Args:
+            first (Vertex): First vertex incident with this edge.
+            second (Vertex): Second vertex incident with this edge.
+            type (EdgeType): Type of the edge.
+            directed (bool): Whether the edge is directed or not.
+
+        """
         self.first = first
         self.second = second
         self.type = type
         self.directed = directed
 
     def get_other(self, vertex: Vertex) -> Vertex:
+        """Returns the vertex of the edge that is not the given vertex.
+
+        Args:
+            vertex (Vertex): One of the vertices incident with this edge. The other
+                vertex will be returned.
+
+        Returns:
+            Vertex: The other vertex.
+
+        """
         if self.first == vertex:
             return self.second
         if self.second == vertex:
             return self.first
         raise ValueError
 
-    def __eq__(self, other: Edge):
+    def __eq__(self, other: Edge) -> bool:
+        """Equality comparison method.
+
+        Edges are equal if they have the same vertices and both are oriented or both
+            are not oriented. If the edges are oriented, then the order of the vertices
+            matters.
+
+        Args:
+            other (Edge): The other edge compared to this edge.
+
+        Returns:
+            bool: True if the edges are equal, False otherwise.
+
+        """
         if self.directed:
             return (
                 other.directed
@@ -76,19 +150,36 @@ class Edge:
             or (self.first == other.second and self.second == other.first)
         )
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         if self.directed:
             return hash((self.directed, self.first, self.second))
         return hash((self.directed, hash(self.first) + hash(self.second)))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.directed:
             return f"({self.first, self.second})"
         return f"{{{self.first}, {self.second}}}"
 
 
 class Graph:
+    """Graph as a set of vertices and a set of edges.
+
+    Attributes:
+        vertices (set[Vertex]): Set of vertices of the graph.
+        edges (set[Edge]): Set of edges of the graph. Vertices of the edges have
+            to be in the set of vertices of this graph.
+
+    """
+
     def __init__(self, vertices: set[Vertex], edges: set[Edge]):
+        """Initializes the graph.
+
+        Args:
+            vertices (set[Vertex]): Set of vertices of the graph.
+            edges (set[Edge]): Set of edges of the graph. Vertices of the edges have
+                to be in the set of vertices of this graph.
+
+        """
         self.vertices = vertices
         self.edges = edges
 
@@ -102,11 +193,20 @@ class Graph:
             self._incidence_dict[edge.first].add(edge)
             self._incidence_dict[edge.second].add(edge)
 
-    def get_incident_edges(self, vertex: Vertex):
+    def get_incident_edges(self, vertex: Vertex) -> set[Edge]:
+        """Returns edges incident with the given vertex.
+
+        Args:
+            vertex (Vertex): The vertex with which the edges are incident.
+
+        Returns:
+            set[Edge]: Set of edges incident with the given vertex.
+
+        """
         return self._incidence_dict[vertex]
 
-    def verify(self):
-        """Verifies if the sets of vertices and edges form a graph.
+    def verify(self) -> bool:
+        """Verifies whether the sets of vertices and edges form a graph.
 
         Both vertices of each edge have to be in `self.vertices` and looped edges
         (i.e. edges with only one vertex) are not allowed.
@@ -125,7 +225,34 @@ class Graph:
 
 
 class GameGraph(Graph):
+    """Graph with the game logic.
+
+    This is the main class that maintains the game state.
+
+    Attributes:
+        vertices (set[Vertex]): Set of vertices of the graph.
+        edges (set[Edge]): Set of edges of the graph. Vertices of the edges have
+            to be in the set of vertices of this graph.
+        snake (Snake): Snake object maintaining the state of the vertices and edges
+            of the snake.
+        apples (set[Vertex]): Set of vertices which are currently apples.
+        apple_callback (Callable[[Vertex], None]): Callback which will be called when
+            the snake moves and eats an apple. The vertex parameter of the callback
+            will be set to the apple vertex.
+
+    """
+
     def __init__(self, vertices: set[Vertex], edges: set[Edge], snake: Snake):
+        """Initializes the graph.
+
+        Args:
+            vertices (set[Vertex]): Set of vertices of the graph.
+            edges (set[Edge]): Set of edges of the graph. Vertices of the edges have
+                to be in the set of vertices of this graph.
+            snake (Snake): Snake object maintaining the state of the vertices and edges
+                of the snake.
+
+        """
         super().__init__(vertices, edges)
         self.snake = snake
         self.apples = set()
@@ -133,7 +260,16 @@ class GameGraph(Graph):
 
         self.apple_callback = lambda: None
 
-    def get_snakes_next_edges(self):
+    def get_snakes_next_edges(self) -> set[Edge]:
+        """Gets the edges where the snake can move next.
+
+        These edges are all the edges incident with the snake's head except for edges
+            of type snake.
+
+        Returns:
+            set[Edge]: Set of the edges where the snake can move next.
+
+        """
         return set(
             edge
             for edge in self.get_incident_edges(self.snake.head)
@@ -141,13 +277,24 @@ class GameGraph(Graph):
         )
 
     def move_snake(self, edge: Edge):
+        """Moves the snake along the given edge.
+
+        See Snake.move method for more details.
+
+        Args:
+            edge (Edge): Edge incident with snake's head. The snake will move along
+                this edge.
+
+        """
         self.snake.move(edge)
 
     def generate_apple_if_missing(self):
+        """Generates new apple if there is currently none in the game."""
         if len(self.apples) == 0:
             self.generate_apple()
 
     def generate_apple(self):
+        """Generates new apple in a random empty vertex."""
         empty_vertices = list(self._get_empty_vertices())
         idx = random.randrange(
             len(empty_vertices)
@@ -170,9 +317,12 @@ class Snake:
     """Class representing the snake.
 
     Attributes:
-        head: Head of the snake.
-        body: List of edges defining the body as a path from head to tail.
-        tail: The tail of the snake.
+        head (Vertex): Head of the snake.
+        body (list[Edge]): List of edges defining the body as a path from head to tail.
+        tail (Vertex): The tail of the snake.
+        apple_callback (Callable[[Vertex], None]): Callback which will be called when
+            the snake moves and eats an apple. The vertex parameter of the callback
+            will be set to the apple vertex.
 
     """
 
@@ -182,9 +332,10 @@ class Snake:
         The edges of the body must define a path from head to tail.
 
         Args:
-            head: Head of the snake.
-            body: List of edges defining the body as a path from head to tail.
-            tail: The tail of the snake.
+            head (Vertex): Head of the snake.
+            body (list[Edge]): List of edges defining the body as a path from head to tail.
+            tail (Vertex): The tail of the snake.
+
         """
         self.head = head
         self.body = body
@@ -202,7 +353,8 @@ class Snake:
         Body has to form a path with head on one end and tail on the other.
 
         Returns:
-            True or False that head, body and tail form a snake.
+            bool: True or False that head, body and tail form a snake.
+
         """
         segments = set()
         segment = self.head
@@ -217,10 +369,12 @@ class Snake:
         return segment == self.tail
 
     def get_segments(self) -> list[Vertex]:
-        """Returns list of snake's body vertices.
+        """Returns list of the snake's body vertices.
 
         Returns:
-            Vertices of the snake in sequence starting from head and ending in tail.
+            list[Vertex]: Vertices of the snake in sequence starting from head and
+                ending in tail.
+
         """
         segments = []
         segment = self.head
@@ -233,9 +387,9 @@ class Snake:
     def update_types(self):
         """Update types of all edges and vertices of the snake.
 
-        All edges and vertices of snake's current position are set to type snake.
-        If snaked moved in the last step (instead of growing), the left vertex and edge
-        are set to type empty.
+        All edges and vertices of the snake's current position are set to type snake.
+        If the snake moved in the last step (instead of growing), the left vertex
+        and edge are set to type empty.
 
         """
         for vertex in self.get_segments():
@@ -255,11 +409,12 @@ class Snake:
         or snake, then the snake dies. If the next vertex is an apple, then the snake
         doesn't move, but instead grows such that its tail remains the same.
 
-        This method updates types of all vertices and edges of the snake and also
-        the left vertex and edge.
+        This method updates types of all vertices and edges of the snake and the vertex
+            and edge the snake just left. Apple callback is called.
 
         Args:
-            edge: Edge incident with snake's head. The snake will move along this edge.
+            edge (Edge): Edge incident with snake's head. The snake will move along
+                this edge.
 
         """
         next_vertex = edge.get_other(self.head)
