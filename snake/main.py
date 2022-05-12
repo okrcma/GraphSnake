@@ -1,10 +1,11 @@
 import pygame
 import pygame.gfxdraw
 
-from control import WSADController, MouseController
+from control import WSADController, MouseController, AIController
 from gui import GUI
 from layout import generate_grid
 from score import Score
+from snake.algorithm import RandomEdgeAlgorithm
 
 GRID_WIDTH = 10
 GRID_HEIGHT = 20
@@ -15,7 +16,8 @@ if __name__ == "__main__":
     graph, layout = generate_grid(GRID_WIDTH, GRID_HEIGHT, EDGE_LENGTH)
     gui = GUI(graph, layout)
     # controller = WSADController(graph, layout)
-    controller = MouseController(graph, layout)
+    # controller = MouseController(graph, layout)
+    controller = AIController(graph, RandomEdgeAlgorithm(graph))
 
     pygame.init()
     clock = pygame.time.Clock()

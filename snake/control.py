@@ -2,6 +2,7 @@ import pygame
 
 from graph import GameGraph
 from layout import GraphLayout, UnitVector
+from snake.algorithm import AbstractSnakeAlgorithm
 
 
 class AbstractController:
@@ -76,3 +77,19 @@ class MouseController(GUIController):
         x1, y1 = self.layout.get_vertex_coordinates(self.graph.snake.head)
         x2, y2 = pygame.mouse.get_pos()
         self.direction = UnitVector(x2 - x1, y2 - y1)
+
+
+class AIController(AbstractController):
+    def __init__(self, graph: GameGraph, algorithm: AbstractSnakeAlgorithm):
+        super().__init__(graph)
+        self.algorithm = algorithm
+
+    def handle_event(self, event):
+        pass
+
+    def update(self):
+        pass
+
+    def move_snake(self):
+        snake_next_edge = self.algorithm.choose_next_edge()
+        self.graph.move_snake(snake_next_edge)

@@ -235,7 +235,17 @@ def generate_grid(width, height, distance):
     snake_head = rows[j - 1][i]
     snake_middle = rows[j][i]
     snake_tail = rows[j + 1][i]
-    snake_body = [Edge(snake_head, snake_middle), Edge(snake_middle, snake_tail)]
+    first_snake_segment = [
+        edge
+        for edge in edges
+        if edge.first == snake_head and edge.second == snake_middle
+    ][0]
+    second_snake_segment = [
+        edge
+        for edge in edges
+        if edge.first == snake_middle and edge.second == snake_tail
+    ][0]
+    snake_body = [first_snake_segment, second_snake_segment]
     snake = Snake(snake_head, snake_body, snake_tail)
 
     graph = GameGraph(vertices, edges, snake)
