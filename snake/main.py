@@ -5,7 +5,7 @@ from control import WSADController, MouseController, AIController
 from gui import GUI
 from layout import generate_grid
 from score import Score
-from snake.algorithm import RandomEdgeAlgorithm
+from snake.algorithm import RandomEdgeAlgorithm, ShortestPathAlgorithm
 
 GRID_WIDTH = 10
 GRID_HEIGHT = 20
@@ -17,7 +17,8 @@ if __name__ == "__main__":
     gui = GUI(graph, layout)
     # controller = WSADController(graph, layout)
     # controller = MouseController(graph, layout)
-    controller = AIController(graph, RandomEdgeAlgorithm(graph))
+    # controller = AIController(graph, RandomEdgeAlgorithm(graph))
+    controller = AIController(graph, ShortestPathAlgorithm(graph))
 
     pygame.init()
     clock = pygame.time.Clock()
@@ -35,7 +36,7 @@ if __name__ == "__main__":
         graph.generate_apple_if_missing()
         gui.draw()
 
-        clock.tick(1)
+        clock.tick(10)
 
     pygame.quit()
 

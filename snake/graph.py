@@ -186,12 +186,38 @@ class Graph:
         if not self.verify():
             raise ValueError("Vertices and edges do not form proper graph.")
 
+        self._edge_dict = {}
+        for vertex in self.vertices:
+            self._edge_dict.setdefault(vertex, {})
+        for edge in self.edges:
+            self._edge_dict[edge.first][edge.second] = edge
+            if not edge.directed:
+                self._edge_dict[edge.second][edge.first] = edge
+
         self._incidence_dict = {}
         for vertex in self.vertices:
             self._incidence_dict.setdefault(vertex, set())
         for edge in self.edges:
             self._incidence_dict[edge.first].add(edge)
             self._incidence_dict[edge.second].add(edge)
+
+    def get_edge(self, first: Vertex, second: Vertex) -> Edge:
+        """Returns edge incident with the two given vertices.
+
+        It is important to get the edges using this method rather than creating
+            new Edge objects with the same vertices, because the game state is
+            maintained by vertices and edges stored in this graph.
+
+        Args:
+            first (Vertex): The first vertex of the sought edge.
+            second (Vertex): The second vertex of the sought edge.
+
+        Returns:
+            Edge: Returns the edge between the two vertices or None if there is
+                no such edge in the graph.
+
+        """
+        return self._edge_dict[first].get(second)
 
     def get_incident_edges(self, vertex: Vertex) -> set[Edge]:
         """Returns edges incident with the given vertex.
