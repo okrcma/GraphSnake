@@ -50,6 +50,9 @@ class RandomEdgeAlgorithm(AbstractSnakeAlgorithm):
 class ShortestPathAlgorithm(AbstractSnakeAlgorithm):
     """Algorithm which looks for the shortest path to the apple.
 
+    If there are multiple apples, then the algorithm chooses one and looks for
+        the shortest path to it, not the shortest path to the closest apple.
+
     This algorithm can still fail if the snake cuts the graph into separate components.
     If there is no path between the head of the snake and the apple, then a backup
     algorithm is used (by default it's RandomEdgeAlgorithm).

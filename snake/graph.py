@@ -65,6 +65,23 @@ class VertexFactory:
         self._next_id_int += 1
         return Vertex(id, type)
 
+    def create_multiple(self, n: int) -> list[Vertex]:
+        """Creates list of n vertices.
+
+        The vertices will have type VertexType.NONE.
+
+        Args:
+            n: Number of vertices to be created.
+
+        Returns:
+            List of the created vertices.
+
+        """
+        vertices = []
+        for _ in range(n):
+            vertices.append(self.create_vertex())
+        return vertices
+
 
 class EdgeType:
     """Enum of types of edges."""
@@ -278,9 +295,9 @@ class GameGraph(Graph):
             vertices (set[Vertex]): Set of vertices of the graph.
             edges (set[Edge]): Set of edges of the graph. Vertices of the edges have
                 to be in the set of vertices of this graph.
-            snake_vertices (list[Vertex]): List of snake vertices. The vertices have
-                to form a path of length at least two. The first vertex will be the
-                head, the second vertex will be the tail. The vertices in this list
+            snake_vertices (list[Vertex]): List of snake vertices and of length at least
+                two. The vertices have to form a path. The first vertex will be the
+                head, the last vertex will be the tail. The vertices in this list
                 have to be in the set of vertices in the previous parameter.
 
         """
@@ -424,6 +441,9 @@ class Snake:
             bool: True or False that head, body and tail form a snake.
 
         """
+        if self.head == self.tail:
+            return False
+
         segments = set()
         segment = self.head
         for edge in self.body:
