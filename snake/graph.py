@@ -201,7 +201,7 @@ class Graph:
             self._incidence_dict[edge.first].add(edge)
             self._incidence_dict[edge.second].add(edge)
 
-    def get_edge(self, first: Vertex, second: Vertex) -> Edge:
+    def get_edge(self, first: Vertex, second: Vertex) -> Edge | None:
         """Returns edge incident with the two given vertices.
 
         It is important to get the edges using this method rather than creating
@@ -239,6 +239,7 @@ class Graph:
 
         Returns:
             bool: True or False that the sets of vertices and edges form a graph.
+
         """
         for edge in self.edges:
             if (
@@ -268,23 +269,31 @@ class GameGraph(Graph):
 
     """
 
-    def __init__(self, vertices: set[Vertex], edges: set[Edge], snake: Snake):
+    def __init__(
+        self, vertices: set[Vertex], edges: set[Edge], snake_vertices: list[Vertex]
+    ):
         """Initializes the graph.
 
         Args:
             vertices (set[Vertex]): Set of vertices of the graph.
             edges (set[Edge]): Set of edges of the graph. Vertices of the edges have
                 to be in the set of vertices of this graph.
-            snake (Snake): Snake object maintaining the state of the vertices and edges
-                of the snake.
+            snake_vertices (list[Vertex]): List of snake vertices. The vertices have
+                to form a path of length at least two. The first vertex will be the
+                head, the second vertex will be the tail. The vertices in this list
+                have to be in the set of vertices in the previous parameter.
 
         """
         super().__init__(vertices, edges)
-        self.snake = snake
         self.apples = set()
-        self.snake.apple_callback = self._on_eaten_apple
-
         self.apple_callback = lambda: None
+
+        self.snake = None
+        self._set_snake(snake_vertices)
+
+    def _set_snake(self, snake_vertices: list[Vertex]):
+        self.snake = Snake.from_vertices(self, snake_vertices)
+        self.snake.apple_callback = self._on_eaten_apple
 
     def get_snakes_next_edges(self) -> set[Edge]:
         """Gets the edges where the snake can move next.
@@ -368,10 +377,43 @@ class Snake:
         self.tail = tail
         self._left_edge = None
 
-        self.verify()
-        self.update_types()
+        if not self.verify():
+            raise ValueError("Head, body and tail do not form proper snake.")
 
+        self.update_types()
         self.apple_callback = lambda vertex: None
+
+    @classmethod
+    def from_vertices(cls, graph: GameGraph, snake_vertices: list[Vertex]) -> Snake:
+        """Construct snake from the given list of vertices.
+
+        The list of vertices has to contain at least two vertices, and the vertices
+            in order have to form a path. The first vertex is the head and the last
+            vertex is the tail.
+
+        Args:
+            graph: Game graph in which to construct the snake.
+            snake_vertices: List of vertices from which to construct the snake. The
+                vertices have to be in the game graph.
+
+        Returns:
+            The constructed snake.
+
+        """
+        if len(snake_vertices) < 2:
+            raise ValueError("Cannot construct snake from less than two vertices.")
+
+        head = snake_vertices[0]
+        body = []
+        tail = snake_vertices[-1]
+
+        first = head
+        for second in snake_vertices[1:]:
+            edge = graph.get_edge(first, second)
+            body.append(edge)
+            first = second
+
+        return cls(head, body, tail)
 
     def verify(self) -> bool:
         """Verifies that head, body and tail form a snake.
@@ -392,7 +434,7 @@ class Snake:
                 segment = edge.get_other(segment)
             except ValueError:
                 return False
-        return segment == self.tail
+        return segment == self.tail and self.tail not in segments
 
     def get_segments(self) -> list[Vertex]:
         """Returns list of the snake's body vertices.
