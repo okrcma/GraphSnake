@@ -1,8 +1,35 @@
 """This module contains AI algorithms for playing snake."""
+from __future__ import annotations
+
 import random
 import networkx as nx
 
-from snake.graph import GameGraph, Edge, VertexType
+from graph import GameGraph, Edge, VertexType
+
+
+class AlgorithmFactory:
+    """Factory for algorithms."""
+
+    @classmethod
+    def get_algorithm(
+        cls, name: str, graph: GameGraph
+    ) -> AbstractSnakeAlgorithm | None:
+        """Get new algorithm object based on the name.
+
+        Args:
+            name: Name of the algorithm to be constructed. Names are assigned
+                to class by this method.
+            graph: Game graph to be passed to the algorithm.
+
+        Returns:
+            New algorithm object or None if no algorithm corresponds to the given name.
+
+        """
+        if name == "random":
+            return RandomEdgeAlgorithm(graph)
+        if name == "path":
+            return ShortestPathAlgorithm(graph)
+        return None
 
 
 class AbstractSnakeAlgorithm:

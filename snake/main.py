@@ -1,24 +1,63 @@
+from __future__ import annotations
+
 import pygame
 import pygame.gfxdraw
+import argparse
 
-from control import WSADController, MouseController, AIController
+from control import ControllerFactory, AbstractController
 from gui import GUI
-from layout import generate_grid
+from layout import generate_grid, GraphLayout
 from score import Score
-from snake.algorithm import RandomEdgeAlgorithm, ShortestPathAlgorithm
+from algorithm import AlgorithmFactory, AbstractSnakeAlgorithm
+from graph import GameGraph
 
 GRID_WIDTH = 10
 GRID_HEIGHT = 20
 EDGE_LENGTH = 40
 
+
+class ProgramArgumentParser:
+    def __init__(self):
+        self._parser = argparse.ArgumentParser(description="Run GraphSnake.")
+        self._parser.add_argument(
+            "-c", "--controller", default="ai", help="Controller of the snake."
+        )
+        self._parser.add_argument(
+            "-a", "--algorithm", default="path", help="Algorithm for the AI controller."
+        )
+        self._parser.add_argument(
+            "-s",
+            "--speed",
+            type=int,
+            default=10,
+            help="Number of snake vertices the snake moves per second.",
+        )
+
+        self._args = self._parser.parse_args()
+
+    def get_controller(
+        self, graph: GameGraph, layout: GraphLayout = None
+    ) -> AbstractController | None:
+        arg_controller = self._args.controller.lower()
+        algorithm = self.get_algorithm(graph)
+        return ControllerFactory.get_controller(
+            arg_controller, graph, layout, algorithm
+        )
+
+    def get_algorithm(self, graph: GameGraph) -> AbstractSnakeAlgorithm | None:
+        arg_algorithm = self._args.algorithm.lower()
+        return AlgorithmFactory.get_algorithm(arg_algorithm, graph)
+
+    def get_speed(self) -> int:
+        return self._args.speed
+
+
 if __name__ == "__main__":
+    args = ProgramArgumentParser()
 
     graph, layout = generate_grid(GRID_WIDTH, GRID_HEIGHT, EDGE_LENGTH)
     gui = GUI(graph, layout)
-    # controller = WSADController(graph, layout)
-    # controller = MouseController(graph, layout)
-    # controller = AIController(graph, RandomEdgeAlgorithm(graph))
-    controller = AIController(graph, ShortestPathAlgorithm(graph))
+    controller = args.get_controller(graph, layout)
 
     pygame.init()
     clock = pygame.time.Clock()
@@ -36,6 +75,6 @@ if __name__ == "__main__":
         graph.generate_apple_if_missing()
         gui.draw()
 
-        clock.tick(10)
+        clock.tick(args.get_speed())
 
     pygame.quit()

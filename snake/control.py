@@ -1,8 +1,28 @@
+from __future__ import annotations
+
 import pygame
 
 from graph import GameGraph
 from layout import GraphLayout, UnitVector
-from snake.algorithm import AbstractSnakeAlgorithm
+from algorithm import AbstractSnakeAlgorithm
+
+
+class ControllerFactory:
+    @classmethod
+    def get_controller(
+        cls,
+        name: str,
+        graph: GameGraph,
+        layout: GraphLayout = None,
+        algorithm: AbstractSnakeAlgorithm = None,
+    ) -> AbstractController | None:
+        if name == "wsad":
+            return WSADController(graph, layout)
+        if name == "mouse":
+            return MouseController(graph, layout)
+        if name == "ai":
+            return AIController(graph, algorithm)
+        return None
 
 
 class AbstractController:
