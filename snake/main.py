@@ -6,10 +6,11 @@ import argparse
 
 from control import ControllerFactory, AbstractController
 from gui import GUI
-from layout import generate_grid, GraphLayout
+from layout import GraphLayout
 from score import Score
 from algorithm import AlgorithmFactory, AbstractSnakeAlgorithm
 from graph import GameGraph
+from build import generate_grid, IsometricGridBuilder
 
 GRID_WIDTH = 10
 GRID_HEIGHT = 20
@@ -55,7 +56,8 @@ class ProgramArgumentParser:
 if __name__ == "__main__":
     args = ProgramArgumentParser()
 
-    graph, layout = generate_grid(GRID_WIDTH, GRID_HEIGHT, EDGE_LENGTH)
+    # graph, layout = generate_grid(GRID_WIDTH, GRID_HEIGHT, EDGE_LENGTH)
+    graph, layout = IsometricGridBuilder().build(10)
     gui = GUI(graph, layout)
     controller = args.get_controller(graph, layout)
 
