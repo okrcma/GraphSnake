@@ -280,7 +280,9 @@ class GameGraph(Graph):
         snake (Snake): Snake object maintaining the state of the vertices and edges
             of the snake.
         apples (set[Vertex]): Set of vertices which are currently apples.
-        apple_callback (Callable[[Vertex], None]): Callback which will be called when
+        move_callback (Callable[[], None]): Callback which will be called before the
+            snake moves.
+        apple_callback (Callable[[], None]): Callback which will be called when
             the snake moves and eats an apple. The vertex parameter of the callback
             will be set to the apple vertex.
 
@@ -303,6 +305,7 @@ class GameGraph(Graph):
         """
         super().__init__(vertices, edges)
         self.apples = set()
+        self.move_callback = lambda: None
         self.apple_callback = lambda: None
 
         self.snake = None
@@ -310,6 +313,7 @@ class GameGraph(Graph):
 
     def _set_snake(self, snake_vertices: list[Vertex]):
         self.snake = Snake.from_vertices(self, snake_vertices)
+        self.snake.move_callback = self._on_before_move
         self.snake.apple_callback = self._on_eaten_apple
 
     def get_snakes_next_edges(self) -> set[Edge]:
@@ -360,6 +364,9 @@ class GameGraph(Graph):
             vertex for vertex in self.vertices if vertex.type == VertexType.EMPTY
         )
 
+    def _on_before_move(self):
+        self.move_callback()
+
     def _on_eaten_apple(self, vertex: Vertex):
         self.apples.remove(vertex)
         self.apple_callback()
@@ -372,6 +379,8 @@ class Snake:
         head (Vertex): Head of the snake.
         body (list[Edge]): List of edges defining the body as a path from head to tail.
         tail (Vertex): The tail of the snake.
+        move_callback (Callable[[], None]): Callback which will be called before the
+            snake moves.
         apple_callback (Callable[[Vertex], None]): Callback which will be called when
             the snake moves and eats an apple. The vertex parameter of the callback
             will be set to the apple vertex.
@@ -398,6 +407,7 @@ class Snake:
             raise ValueError("Head, body and tail do not form proper snake.")
 
         self.update_types()
+        self.move_callback = lambda: None
         self.apple_callback = lambda vertex: None
 
     @classmethod
@@ -505,6 +515,8 @@ class Snake:
                 this edge.
 
         """
+        self._on_before_move()
+
         next_vertex = edge.get_other(self.head)
         if next_vertex.type in [VertexType.WALL, VertexType.SNAKE]:
             self.die()
@@ -520,6 +532,9 @@ class Snake:
             self.tail = self._left_edge.get_other(self.tail)
 
         self.update_types()
+
+    def _on_before_move(self):
+        self.move_callback()
 
     def _on_eaten_apple(self, vertex: Vertex):
         self.apple_callback(vertex)

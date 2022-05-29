@@ -55,13 +55,14 @@ class ProgramArgumentParser:
 
 if __name__ == "__main__":
     args = ProgramArgumentParser()
+    pygame.init()
 
     # graph, layout = generate_grid(GRID_WIDTH, GRID_HEIGHT, EDGE_LENGTH)
-    graph, layout = IsometricGridBuilder().build(10)
-    gui = GUI(graph, layout)
+    graph, layout = IsometricGridBuilder().build(30)
+    score = Score(graph)
+    gui = GUI(graph, layout, score)
     controller = args.get_controller(graph, layout)
 
-    pygame.init()
     clock = pygame.time.Clock()
     done = False
     graph.generate_apple_if_missing()

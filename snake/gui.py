@@ -18,7 +18,7 @@ class Color:
 
 
 class GUI:
-    def __init__(self, graph: GameGraph, layout: GraphLayout):
+    def __init__(self, graph: GameGraph, layout: GraphLayout, score: Score):
         self.graph = graph
         self.layout = layout
 
@@ -26,9 +26,7 @@ class GUI:
         self.window_height = 800
 
         self.graph_panel = Panel(GraphSurface(graph, layout, 800, 800), 0, 0)
-        self.score_panel = Panel(
-            ScoreSurface(Score(graph), 200, 800), 800, 0
-        )  # TODO get score in __init__ args
+        self.score_panel = Panel(ScoreSurface(score, 200, 800), 800, 0)
         self.panels = [self.graph_panel, self.score_panel]
         self.screen = pygame.display.set_mode(
             (self.window_width, self.window_height), flags=pygame.RESIZABLE
@@ -136,6 +134,10 @@ class GraphSurface(AbstractSurface):
 
 
 class ScoreSurface(AbstractSurface):
+    BACKGROUND_COLOR = Color.BLACK
+    TEXT_COLOR = Color.WHITE
+    TEXT_FONT = "latinmodernmono"
+
     def __init__(self, score: Score, width: int, height: int):
         self.score = score
 
@@ -143,13 +145,44 @@ class ScoreSurface(AbstractSurface):
         self.height = height
         self._surface = pygame.Surface((width, height))
 
-    def get_surface(self):
+        self._font = pygame.freetype.SysFont(self.TEXT_FONT, 1)
+
+    def get_surface(self) -> pygame.Surface:
         return self._surface
 
     def draw(self):
-        self._surface.fill(Color.RED)
+        self._surface.fill(self.BACKGROUND_COLOR)
+
+        score_string = f"{self.score.get_score():5.0f}"
+        self._draw_text("SCORE", 0)
+        self._draw_text(score_string, 1)
+
+        moves_string = f"{self.score.get_moves():5.0f}"
+        self._draw_text("MOVES", 2)
+        self._draw_text(moves_string, 3)
+
+        ratio_string = f"{self.score.get_moves_per_point():5.0f}"
+        self._draw_text("  AVG", 4)
+        self._draw_text(ratio_string, 5)
 
     def scale(self, width_ratio: float, height_ratio: float):
         self.width *= width_ratio
         self.height *= height_ratio
         self._surface = pygame.Surface((self.width, self.height))
+
+    def _draw_text(self, text: str, line_number: int):
+        x = self._get_font_offset()
+        y = self._get_font_offset() + self._get_font_size() * line_number
+        self._text_surface = self._font.render_to(
+            surf=self._surface,
+            dest=(x, y),
+            text=text,
+            fgcolor=self.TEXT_COLOR,
+            size=self._get_font_size(),
+        )
+
+    def _get_font_size(self) -> int:
+        return self.width // 3
+
+    def _get_font_offset(self) -> int:
+        return self.width // 12

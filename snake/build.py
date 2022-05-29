@@ -149,9 +149,7 @@ class IsometricGridBuilder:
     def _build_layout(self, vertices_array: list[list[Vertex]]) -> GraphLayout:
         """Build layout for the vertices."""
         base_count = len(vertices_array[0])
-
-        width = height = (base_count + 1)
-
+        width = height = base_count + 1
         layout = GraphLayout(width, height)
 
         for i in range(base_count):
